@@ -1,0 +1,40 @@
+name: Continous Builds
+
+on:
+  push:
+    branches: [master]
+
+env:
+  VERSION: 4.5.5
+
+jobs:
+  job_1:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+      - name: install mingw
+        run: |
+          pip install aqtinstall
+          python3 -m aqt install-tool -O ${{ github.workspace }}/Qt/ windows desktop tools_mingw90
+          echo "${{ github.workspace }}/Qt/Tools/mingw900_64/bin/" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: compile opencv
+        shell: cmd
+        run: |
+          choco install git cmake
+          git clone https://github.com/opencv/opencv.git
+          cd opencv
+          git checkout ${{ env.VERSION }}
+          mkdir build
+          cd build
+          cmake -DWITH_OPENMP=ON -DWITH_OPENCL=ON -DWITH_OPENGL=ON -DWITH_TBB=ON -DWITH_VULKAN=ON -DWITH_QT=OFF -DBUILD_WITH_DEBUG_INFO=OFF -DBUILD_TESTS=OFF -DBUILD_PERF_TESTS=OFF -DBUILD_EXAMPLES=ON -DBUILD_PROTOBUF=OFF -DPROTOBUF_UPDATE_FILES=ON -DINSTALL_C_EXAMPLES=ON -DINSTALL_PYTHON_EXAMPLES=ON -DCPU_BASELINE_DISABLE=SSE3 -DCPU_BASELINE_REQUIRE=SSE2 -DOPENCV_SKIP_PYTHON_LOADER=ON -DOPENCV_ENABLE_NONFREE=ON -DBUILD_opencv_world=ON -G "MinGW Makefiles" -DCMAKE_CXX_COMPILER=g++ ..\
+          cmake --build . --config Release
+          cmake --install .
+      - name: Windows artefact
+        uses: actions/upload-artifact@v2
+        with:
+          name: OpenCV_${{ env.VERSION }}
+          path: ./opencv/build/install/
+
