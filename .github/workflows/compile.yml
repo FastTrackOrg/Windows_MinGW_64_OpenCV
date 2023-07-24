@@ -5,7 +5,7 @@ on:
     branches: [master]
 
 env:
-  VERSION: 4.7.0
+  VERSION: 4.8.0
 
 jobs:
   job_1:
@@ -23,7 +23,7 @@ jobs:
       - name: compile opencv
         shell: cmd
         run: |
-          choco install git cmake
+          choco install git cmake tbb
           git clone https://github.com/opencv/opencv.git
           cd opencv
           git checkout ${{ env.VERSION }}
